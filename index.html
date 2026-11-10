@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[심원고등학교] 구입 희망도서 신청 폼</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --main:#2f5d50; --main-light:#e8f1ee; --accent:#f2a541;
+    --text:#222; --sub:#666; --line:#dde3e1; --bg:#f4f7f6; --err:#d64545;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:24px 14px 60px}
+  .wrap{max-width:640px;margin:0 auto}
+  .header{background:var(--main);color:#fff;border-radius:18px;padding:28px 26px;margin-bottom:16px;position:relative;overflow:hidden}
+  .header::after{content:"📚";position:absolute;right:18px;bottom:-6px;font-size:70px;opacity:.18}
+  .header h1{font-size:22px;font-weight:800;letter-spacing:-.3px}
+  .header p{font-size:14px;opacity:.9;margin-top:6px}
+  .card{background:#fff;border-radius:16px;padding:22px 22px 20px;margin-bottom:12px;border:1px solid var(--line)}
+  .card.hidden{display:none}
+  .q{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;gap:6px;align-items:baseline}
+  .q .num{color:var(--main)}
+  .q .req{color:var(--err);font-size:14px}
+  .hint{font-size:13px;color:var(--sub);margin:-6px 0 10px}
+  input[type=text]{width:100%;padding:13px 14px;font-size:15px;font-family:inherit;border:1.5px solid var(--line);border-radius:10px;outline:none;transition:border .15s;background:#fff}
+  input[type=text]:focus{border-color:var(--main)}
+  input.invalid{border-color:var(--err)}
+  input.filled{background:var(--main-light)}
+  .err{color:var(--err);font-size:13px;margin-top:6px;display:none}
+  .err.show{display:block}
+  /* 학생/교사 선택 */
+  .role{display:flex;gap:10px}
+  .role label{flex:1;cursor:pointer}
+  .role input{display:none}
+  .role span{display:block;text-align:center;padding:13px;border:1.5px solid var(--line);border-radius:10px;font-weight:600;font-size:15px;transition:.15s}
+  .role input:checked + span{border-color:var(--main);background:var(--main);color:#fff}
+  /* 검색 */
+  .search-box{position:relative}
+  .spinner{position:absolute;right:14px;top:50%;width:18px;height:18px;margin-top:-9px;border:2px solid var(--line);border-top-color:var(--main);border-radius:50%;animation:spin .7s linear infinite;display:none}
+  .spinner.show{display:block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .results{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1.5px solid var(--main);border-radius:12px;max-height:380px;overflow-y:auto;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.12);display:none}
+  .results.show{display:block}
+  .item{display:flex;gap:12px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #eef1f0}
+  .item:last-child{border-bottom:none}
+  .item:hover,.item.active{background:var(--main-light)}
+  .item img{width:46px;height:66px;object-fit:cover;border-radius:4px;background:#eee;flex-shrink:0}
+  .item .info{min-width:0;flex:1}
+  .item .t{font-weight:700;font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .item .m{font-size:12.5px;color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .p{font-size:13px;color:var(--main);font-weight:700;margin-top:2px}
+  .empty{padding:16px;text-align:center;color:var(--sub);font-size:14px}
+  .selected{display:none;margin-top:12px;padding:12px;border-radius:10px;background:var(--main-light);gap:12px;align-items:center}
+  .selected.show{display:flex}
+  .selected img{width:40px;height:58px;object-fit:cover;border-radius:4px;background:#ddd}
+  .selected .txt{flex:1;font-size:13.5px}
+  .selected button{border:none;background:none;color:var(--sub);font-size:13px;cursor:pointer;text-decoration:underline;font-family:inherit}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px;background:#fde8c8;color:#9a5b00}
+  .holding{display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.5}
+  .holding.show{display:block}
+  .holding.checking{background:#f1f3f2;color:var(--sub)}
+  .holding.owned{background:#fff3df;border:1.5px solid var(--accent);color:#7a4a00}
+  .holding.none{background:var(--main-light);color:var(--main)}
+  .holding.error{background:#f6f6f6;color:var(--sub)}
+  .holding b{font-weight:800}
+  .holding a{color:inherit;font-weight:700}
+  .price-wrap{position:relative}
+  .price-wrap::after{content:"원";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--sub)}
+  .price-wrap input{padding-right:36px}
+  .submit{width:100%;padding:16px;font-size:16px;font-weight:700;font-family:inherit;color:#fff;background:var(--main);border:none;border-radius:12px;cursor:pointer;margin-top:6px;transition:.15s}
+  .submit:hover{filter:brightness(1.08)}
+  .submit:disabled{opacity:.6;cursor:wait}
+  .demo{background:#fff6e5;border:1px solid #f5d79a;color:#8a5a00;font-size:13px;border-radius:10px;padding:10px 14px;margin-bottom:12px}
+  /* 완료 화면 */
+  .done{display:none;text-align:center;padding:40px 22px}
+  .done .ic{font-size:52px}
+  .done h2{font-size:20px;margin:10px 0 6px}
+  .done p{color:var(--sub);font-size:14px}
+  .done .summary{text-align:left;background:var(--main-light);border-radius:12px;padding:14px 16px;margin:18px 0;font-size:14px}
+  .done .summary div{padding:2px 0}
+  .done button{padding:12px 22px;font-size:15px;font-weight:700;font-family:inherit;border-radius:10px;border:1.5px solid var(--main);background:#fff;color:var(--main);cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#333;color:#fff;padding:12px 20px;border-radius:30px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>[심원고등학교] 구입 희망도서 신청 폼</h1>
+    <p>도서관에 들어왔으면 하는 책을 신청해 주세요.<br>도서명을 입력하면 예스24에서 검색해 저자·출판사·가격을 자동으로 채워 드립니다.</p>
+  </div>
+
+  <div id="demoNotice" class="demo" style="display:none">⚙ 미리보기 모드입니다. 검색 결과는 예시이며, 신청 내용은 저장되지 않습니다. (SCRIPT_URL 설정 또는 Apps Script 배포 후 실제 작동)</div>
+
+  <form id="form" novalidate>
+    <!-- 1. 학생/교사 -->
+    <div class="card">
+      <div class="q"><span class="num">1.</span>학생 / 교사<span class="req">*</span></div>
+      <div class="role">
+        <label><input type="radio" name="role" value="학생"><span>🎒 학생</span></label>
+        <label><input type="radio" name="role" value="교사"><span>👩‍🏫 교사</span></label>
+      </div>
+      <div class="err" data-for="role">학생 또는 교사를 선택해 주세요.</div>
+    </div>
+
+    <!-- 2. 학번 (학생만) -->
+    <div class="card hidden" id="cardStudentId">
+      <div class="q"><span class="num">2.</span>학번<span class="req">*</span></div>
+      <div class="hint">예) 10305 (1학년 3반 5번)</div>
+      <input type="text" id="studentId" inputmode="numeric" maxlength="5" placeholder="학번 5자리" autocomplete="off">
+      <div class="err" data-for="studentId">학번 5자리를 숫자로 입력해 주세요.</div>
+    </div>
+
+    <!-- 3. 이름 -->
+    <div class="card">
+      <div class="q"><span class="num" data-num>2.</span>이름<span class="req">*</span></div>
+      <input type="text" id="name" placeholder="이름" autocomplete="off">
+      <div class="err" data-for="name">이름을 입력해 주세요.</div>
+    </div>
+
+    <!-- 4. 도서명 -->
+    <div class="card">
+      <div class="q"><span class="num" data-num>3.</span>도서명<span class="req">*</span></div>
+      <div class="hint">2글자 이상 입력하면 검색 결과가 나타납니다. 목록에서 책을 고르세요.</div>
+      <div class="search-box">
+        <input type="text" id="title" placeholder="도서명을 입력하세요" autocomplete="off">
+        <div class="spinner" id="spinner"></div>
+        <div class="results" id="results"></div>
+      </div>
+      <div class="selected" id="selected">
+        <img id="selCover" alt="">
+        <div class="txt">✅ 검색 결과에서 선택한 도서입니다.<br><span style="color:var(--sub)">아래 정보가 자동으로 입력되었습니다.</span></div>
+        <button type="button" id="clearSel">선택 해제</button>
+      </div>
+      <div class="holding" id="holding"></div>
+      <div class="err" data-for="title">도서명을 입력해 주세요.</div>
+    </div>
+
+    <!-- 5. 저자 -->
+    <div class="card">
+      <div class="q"><span class="num" data-num>4.</span>저자<span class="req">*</span></div>
+      <input type="text" id="author" placeholder="저자" autocomplete="off">
+      <div class="err" data-for="author">저자를 입력해 주세요.</div>
+    </div>
+
+    <!-- 6. 출판사 -->
+    <div class="card">
+      <div class="q"><span class="num" data-num>5.</span>출판사<span class="req">*</span></div>
+      <input type="text" id="publisher" placeholder="출판사" autocomplete="off">
+      <div class="err" data-for="publisher">출판사를 입력해 주세요.</div>
+    </div>
+
+    <!-- 7. 가격 -->
+    <div class="card">
+      <div class="q"><span class="num" data-num>6.</span>가격<span class="req">*</span></div>
+      <div class="price-wrap"><input type="text" id="price" inputmode="numeric" placeholder="정가" autocomplete="off"></div>
+      <div class="err" data-for="price">가격을 숫자로 입력해 주세요.</div>
+    </div>
+
+    <button type="submit" class="submit" id="submitBtn">신청하기</button>
+  </form>
+
+  <div class="card done" id="done">
+    <div class="ic">🎉</div>
+    <h2>신청이 완료되었습니다!</h2>
+    <p>검토 후 구입 여부가 결정됩니다. 감사합니다.</p>
+    <div class="summary" id="summary"></div>
+    <button type="button" id="again">한 권 더 신청하기</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================================================
+   ★ GitHub Pages 등 다른 곳에 올려 쓸 때:
+     아래 SCRIPT_URL 에 Apps Script 웹 앱 주소(.../exec)를 붙여 넣으세요.
+   · Apps Script 웹 앱으로 직접 열면 SCRIPT_URL 없이도 자동 연결됩니다.
+   · 둘 다 아니면 '미리보기 모드'(예시 데이터, 저장 안 함)로 작동합니다.
+   ====================================================== */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5uHQ6obkJubcVS-ntFEuUi0lvXMR7cLzIdwypLfdrOkNE9e4pnFy6Be_AoxLyZF59/exec';
+
+const $ = id => document.getElementById(id);
+const IN_GAS = typeof google !== 'undefined' && google.script && google.script.run;
+const DEMO = !IN_GAS && !SCRIPT_URL;
+
+// Code.gs 함수 호출 → Promise
+// - Apps Script 안: google.script.run
+// - GitHub 등 외부: 웹 앱 주소로 요청 (검색·소장확인은 GET, 신청은 POST)
+function gas(fn, ...args) {
+  if (IN_GAS) {
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+    });
+  }
+  const get = params => fetch(SCRIPT_URL + '?' + new URLSearchParams(params)).then(r => r.json());
+  switch (fn) {
+    case 'searchBooks':       return get({ action: 'search', q: args[0] });
+    case 'checkHolding':      return get({ action: 'holding', isbn: args[0], title: args[1] });
+    case 'checkHoldingBatch': return get({ action: 'holdings', isbns: args[0].join(',') });
+    case 'submitRequest':     // text/plain 으로 보내야 브라우저 사전요청(CORS) 없이 전송됨
+      return fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(args[0]) }).then(r => r.json());
+  }
+  return Promise.reject(new Error('알 수 없는 요청: ' + fn));
+}
+if (DEMO) $('demoNotice').style.display = 'block';
+
+let picked = null;          // 검색 결과에서 고른 도서
+let results = [];
+let activeIdx = -1;
+let timer = null;
+let reqSeq = 0;
+
+/* ---------- 학생/교사 전환 ---------- */
+document.querySelectorAll('input[name=role]').forEach(r => r.addEventListener('change', () => {
+  const isStudent = r.value === '학생' && r.checked;
+  $('cardStudentId').classList.toggle('hidden', !isStudent);
+  // 문항 번호 다시 매기기 (학생이면 학번이 2번)
+  document.querySelectorAll('[data-num]').forEach((el, i) => el.textContent = (i + (isStudent ? 3 : 2)) + '.');
+  if (!isStudent) $('studentId').value = '';
+  hideErr('role');
+}));
+
+$('studentId').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); hideErr('studentId'); });
+$('price').addEventListener('input', e => {
+  const n = e.target.value.replace(/\D/g, '');
+  e.target.value = n ? Number(n).toLocaleString('ko-KR') : '';
+  hideErr('price');
+});
+['name', 'author', 'publisher'].forEach(id => $(id).addEventListener('input', () => { hideErr(id); $(id).classList.remove('filled'); }));
+
+/* ---------- 도서 검색 ---------- */
+$('title').addEventListener('input', () => {
+  hideErr('title');
+  hideHolding();
+  if (picked) unpick(false);
+  clearTimeout(timer);
+  const q = $('title').value.trim();
+  if (q.length < 2) { closeResults(); return; }
+  timer = setTimeout(() => search(q), 400);
+});
+
+$('title').addEventListener('keydown', e => {
+  if (!$('results').classList.contains('show') || !results.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(activeIdx + 1, results.length - 1)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0)); }
+  else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); pick(results[activeIdx]); }
+  else if (e.key === 'Escape') closeResults();
+});
+
+document.addEventListener('click', e => { if (!e.target.closest('.search-box')) closeResults(); });
+
+// 목록에서 고르지 않고 직접 입력한 경우: 입력칸을 벗어나면 제목으로 소장 확인
+$('title').addEventListener('blur', () => {
+  setTimeout(() => {
+    const t = $('title').value.trim();
+    if (!picked && t.length >= 2 && t !== lastHoldingTitle) checkHolding('', t);
+  }, 250);   // 목록 클릭(pick)이 먼저 처리되도록 잠깐 대기
+});
+
+async function search(q) {
+  const seq = ++reqSeq;
+  $('spinner').classList.add('show');
+  try {
+    const list = DEMO ? demoSearch(q) : await gas('searchBooks', q).then(d => {
+      if (d.error) throw new Error(d.error);
+      return d.items || [];
+    });
+    if (seq !== reqSeq) return;   // 더 최근 검색이 있으면 무시
+    results = list;
+    renderResults();
+    markHoldings(seq);
+  } catch (err) {
+    if (seq !== reqSeq) return;
+    results = [];
+    $('results').innerHTML = '<div class="empty">검색 중 오류가 발생했습니다. 직접 입력해 주세요.</div>';
+    $('results').classList.add('show');
+  } finally {
+    if (seq === reqSeq) $('spinner').classList.remove('show');
+  }
+}
+
+function renderResults() {
+  activeIdx = -1;
+  const box = $('results');
+  if (!results.length) {
+    box.innerHTML = '<div class="empty">검색 결과가 없습니다. 저자·출판사·가격을 직접 입력해 주세요.</div>';
+  } else {
+    box.innerHTML = results.map((b, i) => `
+      <div class="item" data-i="${i}">
+        <img src="${esc(b.cover)}" alt="" onerror="this.style.visibility='hidden'">
+        <div class="info">
+          <div class="t">${esc(b.title)}<span class="badge" data-badge="${esc(b.isbn)}" style="display:none">📚 소장</span></div>
+          <div class="m">${esc(b.author)} · ${esc(b.publisher)}${b.pubDate ? ' · ' + esc(b.pubDate.slice(0, 4)) : ''}</div>
+          <div class="p">${b.price ? Number(b.price).toLocaleString('ko-KR') + '원' : '가격 정보 없음'}</div>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('.item').forEach(el => {
+      el.addEventListener('click', () => pick(results[el.dataset.i]));
+      el.addEventListener('mouseenter', () => setActive(+el.dataset.i));
+    });
+  }
+  box.classList.add('show');
+}
+
+function setActive(i) {
+  activeIdx = i;
+  $('results').querySelectorAll('.item').forEach((el, j) => el.classList.toggle('active', j === i));
+  const el = $('results').querySelector('.item.active');
+  if (el) el.scrollIntoView({ block: 'nearest' });
+}
+
+function pick(b) {
+  picked = b;
+  $('title').value = b.title;
+  setFilled('author', b.author);
+  setFilled('publisher', b.publisher);
+  setFilled('price', b.price ? Number(b.price).toLocaleString('ko-KR') : '');
+  $('selCover').src = b.cover || '';
+  $('selCover').style.display = b.cover ? '' : 'none';
+  $('selected').classList.add('show');
+  ['title', 'author', 'publisher', 'price'].forEach(hideErr);
+  closeResults();
+  checkHolding(b.isbn, b.title);
+}
+
+/* ---------- 독서로(우리학교 도서검색) 소장 확인 ---------- */
+let holdSeq = 0;
+let lastHoldingTitle = '';
+const READ365 = 'https://read365.edunet.net/PureScreen/SchoolSearchResult?provCode=J10&neisCode=J100000671&schoolName=' + encodeURIComponent('심원고등학교') + '&searchKeyword=';
+
+async function checkHolding(isbn, title) {
+  const seq = ++holdSeq;
+  lastHoldingTitle = title;
+  const box = $('holding');
+  box.className = 'holding show checking';
+  box.innerHTML = '🔎 우리 학교 도서관 소장 여부를 확인하고 있어요...';
+  let r;
+  try {
+    r = DEMO ? demoHolding(isbn, title)
+             : await gas('checkHolding', isbn || '', title);
+  } catch (e) { r = { match: 'error' }; }
+  if (seq !== holdSeq) return;   // 더 최근 확인이 있으면 무시
+  const url = r.url || READ365 + encodeURIComponent(title);
+
+  if (r.match === 'error') {
+    box.className = 'holding show error';
+    box.innerHTML = `소장 여부를 확인하지 못했어요. <a href="${esc(url)}" target="_blank" rel="noopener">독서로에서 직접 확인하기 ↗</a>`;
+  } else if (r.owned) {
+    box.className = 'holding show owned';
+    const what = r.match === 'isbn' ? '이 도서는' : '같은 제목의 도서가';
+    box.innerHTML = `📚 <b>${what} 이미 심원고등학교 도서관에 소장되어 있습니다.</b><br>`
+      + `소장 ${r.count}권${r.available != null ? ` · 지금 대출 가능 ${r.available}권` : ''}`
+      + ` · <a href="${esc(url)}" target="_blank" rel="noopener">독서로에서 보기 ↗</a>`
+      + (r.match === 'title' ? '<br><span style="font-size:13px">출판사나 판이 다를 수 있으니 확인 후 신청해 주세요.</span>' : '');
+  } else {
+    box.className = 'holding show none';
+    box.innerHTML = '✅ 우리 학교 도서관에 없는 도서입니다. 신청할 수 있어요!';
+  }
+}
+
+function hideHolding() {
+  holdSeq++;
+  lastHoldingTitle = '';
+  $('holding').className = 'holding';
+}
+
+// 검색 목록에서 이미 소장한 책에 '📚 소장' 표시
+async function markHoldings(seq) {
+  const isbns = results.map(b => b.isbn).filter(Boolean);
+  if (!isbns.length) return;
+  let map = {};
+  try {
+    map = DEMO ? Object.fromEntries(isbns.map(i => [i, DEMO_OWNED.includes(i) ? 1 : 0]))
+               : (await gas('checkHoldingBatch', isbns)).holdings || {};
+  } catch (e) { return; }
+  if (seq !== reqSeq) return;
+  document.querySelectorAll('[data-badge]').forEach(el => { if (map[el.dataset.badge] > 0) el.style.display = 'inline-block'; });
+}
+
+function unpick(clearFields = true) {
+  picked = null;
+  $('selected').classList.remove('show');
+  hideHolding();
+  if (clearFields) ['author', 'publisher', 'price'].forEach(id => { $(id).value = ''; $(id).classList.remove('filled'); });
+}
+
+$('clearSel').addEventListener('click', () => { unpick(); $('title').focus(); });
+
+function setFilled(id, v) { $(id).value = v || ''; $(id).classList.toggle('filled', !!v); }
+function closeResults() { $('results').classList.remove('show'); activeIdx = -1; }
+
+/* ---------- 제출 ---------- */
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const role = (document.querySelector('input[name=role]:checked') || {}).value;
+  const data = {
+    role: role || '',
+    studentId: $('studentId').value.trim(),
+    name: $('name').value.trim(),
+    title: $('title').value.trim(),
+    author: $('author').value.trim(),
+    publisher: $('publisher').value.trim(),
+    price: $('price').value.replace(/\D/g, ''),
+    isbn: picked ? picked.isbn : ''
+  };
+
+  let ok = true;
+  const fail = id => { showErr(id); ok = false; };
+  if (!data.role) fail('role');
+  if (data.role === '학생' && !/^\d{5}$/.test(data.studentId)) fail('studentId');
+  ['name', 'title', 'author', 'publisher'].forEach(id => { if (!data[id]) fail(id); });
+  if (!data.price) fail('price');
+  if (!ok) {
+    const first = document.querySelector('.err.show');
+    first.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast('필수 항목을 모두 입력해 주세요.');
+    return;
+  }
+
+  const btn = $('submitBtn');
+  btn.disabled = true; btn.textContent = '신청 중...';
+  try {
+    if (!DEMO) {
+      const res = await gas('submitRequest', data);
+      if (!res.ok) throw new Error(res.error || '저장 실패');
+      if (res.duplicate) toast('이미 신청된 도서입니다. 신청 내역에 함께 기록했어요.');
+    }
+    showDone(data);
+  } catch (err) {
+    toast('신청 중 오류가 발생했습니다: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '신청하기';
+  }
+});
+
+function showDone(d) {
+  $('form').style.display = 'none';
+  $('summary').innerHTML = [
+    ['구분', d.role + (d.studentId ? ` (${d.studentId})` : '')],
+    ['이름', d.name], ['도서명', d.title], ['저자', d.author],
+    ['출판사', d.publisher], ['가격', Number(d.price).toLocaleString('ko-KR') + '원']
+  ].map(([k, v]) => `<div><b>${k}</b> : ${esc(v)}</div>`).join('');
+  $('done').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('again').addEventListener('click', () => {
+  // 신청자 정보(구분·학번·이름)는 유지하고 도서 정보만 비움
+  ['title', 'author', 'publisher', 'price'].forEach(id => { $(id).value = ''; $(id).classList.remove('filled'); });
+  unpick(false);
+  $('done').style.display = 'none';
+  $('form').style.display = 'block';
+  $('title').focus();
+});
+
+/* ---------- 도우미 ---------- */
+function showErr(id) {
+  const el = document.querySelector(`.err[data-for=${id}]`);
+  if (el) el.classList.add('show');
+  if ($(id)) $(id).classList.add('invalid');
+}
+function hideErr(id) {
+  const el = document.querySelector(`.err[data-for=${id}]`);
+  if (el) el.classList.remove('show');
+  if ($(id)) $(id).classList.remove('invalid');
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+let toastTimer;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- 미리보기용 예시 데이터 ---------- */
+const DEMO_OWNED = ['9788936434120', '9788937460449'];   // 예시: 소년이 온다, 데미안은 '소장'
+function demoHolding(isbn, title) {
+  const owned = DEMO_OWNED.includes(isbn) || ['소년이온다', '데미안'].includes(String(title).replace(/\s/g, ''));
+  return { owned, match: owned ? (isbn ? 'isbn' : 'title') : 'none', count: owned ? 2 : 0, available: owned ? 1 : 0 };
+}
+function demoSearch(q) {
+  const sample = [
+    { title: '소년이 온다', author: '한강', publisher: '창비', price: 15000, pubDate: '2014-05-19', isbn: '9788936434120', cover: '' },
+    { title: '채식주의자', author: '한강', publisher: '창비', price: 15000, pubDate: '2022-03-28', isbn: '9788936434595', cover: '' },
+    { title: '아몬드', author: '손원평', publisher: '다즐링', price: 15000, pubDate: '2023-06-14', isbn: '9791198363503', cover: '' },
+    { title: '불편한 편의점', author: '김호연', publisher: '나무옆의자', price: 14000, pubDate: '2021-04-20', isbn: '9791161571188', cover: '' },
+    { title: '데미안', author: '헤르만 헤세', publisher: '민음사', price: 9000, pubDate: '2000-12-20', isbn: '9788937460449', cover: '' }
+  ];
+  const hit = sample.filter(b => b.title.includes(q) || b.author.includes(q));
+  return hit.length ? hit : sample.map(b => ({ ...b }));
+}
+</script>
+</body>
+</html>
